@@ -76,6 +76,8 @@
     "hint_ready": "Está tudo a funcionar.",
     "tracking_button": "Ativar monitorização do Claude",
     "btn_update": "Atualizar monitorização",
+    "btn_remove": "Remover monitorização do Claude",
+    "btn_remove_confirm": "Clique novamente para remover",
     "btn_check_terminal": "Verificar acesso ao terminal",
     "btn_checking": "A perguntar ao macOS…",
     "btn_guide": "Guia do utilizador",

@@ -202,12 +202,16 @@ export function renderOptions({ question, options, index, qIdx = 0, qTotal = 1 }
 }
 
 // multiSelect asks can't be answered from the deck — point at the terminal.
-export function renderCheckTerminal() {
+// kind: 'multi' (multiSelect question) | 'plan' (ExitPlanMode approval)
+export function renderCheckTerminal(kind = 'multi') {
   const font = 'font-family="-apple-system,Helvetica,Arial,sans-serif"';
   const ask = STATE_STYLE.asking.color;
+  const [tag, title] = kind === 'plan'
+    ? ['CLAUDE ASKS · PLAN', 'plan approval']
+    : ['CLAUDE ASKS · MULTI', 'multi-select question'];
   const body =
-    `<text x="24" y="32" ${font} font-size="18" font-weight="700" fill="${ask}" letter-spacing="2">CLAUDE ASKS · MULTI</text>` +
-    `<text x="${W / 2}" y="96" ${font} font-size="32" font-weight="700" text-anchor="middle" fill="${TEXT}">multi-select question</text>` +
+    `<text x="24" y="32" ${font} font-size="18" font-weight="700" fill="${ask}" letter-spacing="2">${tag}</text>` +
+    `<text x="${W / 2}" y="96" ${font} font-size="32" font-weight="700" text-anchor="middle" fill="${TEXT}">${title}</text>` +
     `<text x="${W / 2}" y="138" ${font} font-size="24" font-weight="600" text-anchor="middle" fill="${ask}">answer in the terminal</text>` +
     `<text x="${W / 2}" y="172" ${font} font-size="18" font-weight="600" text-anchor="middle" fill="${MUTED}">press OK to jump there</text>`;
   return toDataUrl(svgDoc(body));

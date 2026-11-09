@@ -1,7 +1,7 @@
 {
   "name": "claude-deck",
-  "version": "1.0.0",
-  "description": "Personal Ulanzi Deck shortcuts: shell commands, app launching, hotkeys, iTerm/Claude Code controls.",
+  "version": "2.5.0",
+  "description": "Claude Code on the Ulanzi Deck: live status pet, answer questions from the deck, and a big-screen session display.",
   "author": "Antonio González",
   "license": "MIT",
   "private": true,

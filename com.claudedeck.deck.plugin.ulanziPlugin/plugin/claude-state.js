@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync, openSync, readSync, fstatSync, closeSync } from 'fs';
 import { homedir } from 'os';
 import { join, basename } from 'path';
 
@@ -11,6 +11,65 @@ const WORKING_STALE_MS = 15 * 60 * 1000; // working with no events this long = d
 const DEAD_MS = 12 * 60 * 60 * 1000;     // any file this old is ignored entirely
 
 const PRIORITY = { asking: 4, attention: 3, compacting: 2, working: 1, waiting: 0 };
+
+// tools whose pending prompt the deck can answer (mirrors ASKING_TOOLS in the hook)
+const ASKING_TOOLS = new Set(['AskUserQuestion', 'ExitPlanMode']);
+const TRANSCRIPT_TAIL = 131072;
+
+// sid -> { size, mtimeMs, ts, resolved } so the 1 s polls of every key don't
+// re-read the transcript unless it actually grew
+const RESOLVED_CACHE = new Map();
+
+// Has the question behind an `asking` state already been dealt with?
+//
+// Esc-cancelling a question fires NO hook, so the state file keeps saying
+// `asking` until the next session event or the 15-min stale rule. During that
+// window a deck OK would type a digit into the prompt box — and on
+// Terminal.app, whose `do script` always appends a newline, *submit* it as a
+// prompt. The transcript does record the outcome: every answered, rejected or
+// cancelled tool call gets a tool_result. So the ask is over once a tool_result
+// for an asking tool appears with a timestamp after the hook wrote the state
+// (older asks in the tail are resolved before s.ts and never match).
+// Unknown (old state file without a transcript path, unreadable transcript) →
+// false, i.e. the previous behaviour.
+export function askResolved(s) {
+  const tp = s && s.transcript;
+  if (!tp || typeof s.ts !== 'number') return false;
+  let fd;
+  try {
+    fd = openSync(tp, 'r');
+    const st = fstatSync(fd);
+    const hit = RESOLVED_CACHE.get(s.sid);
+    if (hit && hit.size === st.size && hit.mtimeMs === st.mtimeMs && hit.ts === s.ts) return hit.resolved;
+    const start = Math.max(0, st.size - TRANSCRIPT_TAIL);
+    const buf = Buffer.alloc(st.size - start);
+    readSync(fd, buf, 0, buf.length, start);
+    const askIds = new Set();
+    let resolved = false;
+    const askedAt = s.ts * 1000;
+    for (const line of buf.toString('utf8').split('\n')) {
+      if (!line.startsWith('{')) continue; // partial first line of the tail window
+      let rec;
+      try { rec = JSON.parse(line); } catch { continue; }
+      const content = rec.message && Array.isArray(rec.message.content) ? rec.message.content : [];
+      for (const b of content) {
+        if (!b) continue;
+        if (b.type === 'tool_use' && ASKING_TOOLS.has(b.name)) askIds.add(b.id);
+        else if (b.type === 'tool_result' && askIds.has(b.tool_use_id)) {
+          if (s.tool_use_id && b.tool_use_id !== s.tool_use_id) continue;
+          const at = Date.parse(rec.timestamp || '');
+          if (at > askedAt) resolved = true;
+        }
+      }
+    }
+    RESOLVED_CACHE.set(s.sid, { size: st.size, mtimeMs: st.mtimeMs, ts: s.ts, resolved });
+    return resolved;
+  } catch {
+    return false;
+  } finally {
+    if (fd !== undefined) { try { closeSync(fd); } catch { /* already closed */ } }
+  }
+}
 
 export function readStates() {
   let files;
@@ -31,6 +90,10 @@ export function readStates() {
       if (age > DEAD_MS) continue;
       if ((s.state === 'working' || s.state === 'compacting' || s.state === 'asking') && age > WORKING_STALE_MS) {
         s.state = 'waiting';
+      } else if (s.state === 'asking' && askResolved(s)) {
+        // answered/cancelled in the terminal without a hook firing (Esc)
+        s.state = 'waiting';
+        delete s.ask;
       }
       states.push(s);
     } catch { /* partial write or bad file — skip */ }

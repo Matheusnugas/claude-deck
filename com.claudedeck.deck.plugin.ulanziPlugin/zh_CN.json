@@ -76,6 +76,8 @@
     "hint_ready": "一切正常。",
     "tracking_button": "启用 Claude 追踪",
     "btn_update": "更新 Claude 追踪",
+    "btn_remove": "移除 Claude 追踪",
+    "btn_remove_confirm": "再次点击以移除",
     "btn_check_terminal": "检查终端访问权限",
     "btn_checking": "正在询问 macOS…",
     "btn_guide": "用户指南",

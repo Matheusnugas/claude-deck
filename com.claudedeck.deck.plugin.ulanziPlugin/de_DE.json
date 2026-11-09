@@ -76,6 +76,8 @@
     "hint_ready": "Alles funktioniert.",
     "tracking_button": "Claude-Tracking aktivieren",
     "btn_update": "Tracking aktualisieren",
+    "btn_remove": "Claude-Tracking entfernen",
+    "btn_remove_confirm": "Zum Entfernen erneut klicken",
     "btn_check_terminal": "Terminal-Zugriff prüfen",
     "btn_checking": "Frage macOS…",
     "btn_guide": "Anleitung",

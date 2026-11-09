@@ -76,6 +76,8 @@
     "hint_ready": "모두 정상 작동 중입니다.",
     "tracking_button": "Claude 추적 활성화",
     "btn_update": "추적 업데이트",
+    "btn_remove": "Claude 추적 제거",
+    "btn_remove_confirm": "한 번 더 클릭하면 제거",
     "btn_check_terminal": "터미널 접근 확인",
     "btn_checking": "macOS에 확인 중…",
     "btn_guide": "사용자 가이드",

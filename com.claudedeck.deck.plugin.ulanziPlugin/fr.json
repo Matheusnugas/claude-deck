@@ -76,6 +76,8 @@
     "hint_ready": "Tout fonctionne.",
     "tracking_button": "Activer le suivi de Claude",
     "btn_update": "Mettre à jour le suivi",
+    "btn_remove": "Retirer le suivi de Claude",
+    "btn_remove_confirm": "Cliquez encore pour retirer",
     "btn_check_terminal": "Vérifier l'accès au terminal",
     "btn_checking": "Demande à macOS…",
     "btn_guide": "Guide d'utilisation",

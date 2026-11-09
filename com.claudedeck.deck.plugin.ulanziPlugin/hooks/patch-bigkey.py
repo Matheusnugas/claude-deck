@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Write the Cycle iTerm Sessions action into the big key (slot 3_2) of the
 current page of every active profile. Must run while Ulanzi Studio is NOT
-running (Studio rewrites profile files from memory on quit)."""
+running (Studio rewrites profile files from memory on quit).
+
+Fallback for patch-bigkey.mjs (the Node port, run on Studio's bundled Node) —
+keep the two in step."""
 import json
 import os
 import shutil
@@ -102,7 +105,9 @@ def main():
                 if want_on == is_ours:
                     continue  # already in the desired state
                 svm = (cur.get("ActionParam") or {}).get("SmallViewMode")
-                shutil.copy(pm_path, pm_path + ".bak-bigkey")
+                # keep the page as it was before Claude Deck first touched it
+                if not os.path.exists(pm_path + ".bak-bigkey"):
+                    shutil.copy(pm_path, pm_path + ".bak-bigkey")
                 if want_on:
                     save_widget(cur)
                 new = make_entry(svm) if want_on else widget_entry()

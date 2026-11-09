@@ -31,6 +31,21 @@ else
   exit 1
 fi
 
+# ./sync-hooks.sh --uninstall removes our entries from every profile instead
+# (other tools' hooks are left alone; the original settings.json is kept as
+# settings.json.bak-claudedeck)
+if [[ "${1:-}" == "--uninstall" ]]; then
+  "$NODE" --input-type=module -e "
+const m = await import('file://' + process.argv[1]);
+for (const r of m.uninstallHooks()) {
+  if (r.error) console.log(\`\${r.settings}: ERROR \${r.error}\`);
+  else if (r.changed) console.log(\`\${r.settings}: removed \${r.removed} entr(ies)\`);
+  else console.log(\`\${r.settings}: nothing of ours\`);
+}
+" "$SETUP"
+  exit 0
+fi
+
 "$NODE" --input-type=module -e "
 const m = await import('file://' + process.argv[1]);
 const status = m.hookStatus();

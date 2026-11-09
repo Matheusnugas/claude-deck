@@ -76,6 +76,8 @@
     "hint_ready": "Everything is working.",
     "tracking_button": "Enable Claude tracking",
     "btn_update": "Update Claude tracking",
+    "btn_remove": "Remove Claude tracking",
+    "btn_remove_confirm": "Click again to remove",
     "btn_check_terminal": "Check terminal access",
     "btn_checking": "Asking macOS…",
     "btn_guide": "User Guide",

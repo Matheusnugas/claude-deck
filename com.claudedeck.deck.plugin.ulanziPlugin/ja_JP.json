@@ -76,6 +76,8 @@
     "hint_ready": "すべて正常に動作しています。",
     "tracking_button": "Claude トラッキングを有効化",
     "btn_update": "トラッキングを更新",
+    "btn_remove": "Claude の追跡を削除",
+    "btn_remove_confirm": "もう一度クリックで削除",
     "btn_check_terminal": "ターミナルアクセスを確認",
     "btn_checking": "macOS に確認中…",
     "btn_guide": "ユーザーガイド",

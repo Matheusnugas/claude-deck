@@ -163,6 +163,15 @@ export function hookStatus() {
   return { installed, missing, outdated, claude, command: hookCommand() };
 }
 
+// The first backup is the user's settings.json as it was before Claude Deck
+// ever touched it — later runs must not overwrite it with an already-modified
+// copy, or the one file worth restoring is gone.
+const BACKUP_SUFFIX = '.bak-claudedeck';
+function backupOnce(settings) {
+  const bak = settings + BACKUP_SUFFIX;
+  if (!existsSync(bak)) copyFileSync(settings, bak);
+}
+
 // inject hook entries into every profile (idempotent, backs up changed files,
 // creates settings.json — and its directory — when the profile has none yet)
 export function installHooks() {
@@ -204,9 +213,59 @@ export function installHooks() {
         added = true;
       }
       if (added) {
-        if (existed) copyFileSync(settings, settings + '.bak-claudedeck');
+        if (existed) backupOnce(settings);
         writeFileSync(settings, JSON.stringify(data, null, 2));
         results.push({ settings, changed: true, created: !existed });
+      } else {
+        results.push({ settings, changed: false });
+      }
+    } catch (e) {
+      results.push({ settings, error: e?.message });
+    }
+  }
+  return results;
+}
+
+// Remove every hook entry of ours (current or older command lines) from every
+// ~/.claude* profile, leaving other tools' hooks untouched. Blocks and events
+// left empty by the removal are dropped, and `hooks` itself when nothing else
+// remains. Without this, uninstalling the plugin (or Studio moving its bundled
+// Node) leaves every Claude event running a command that no longer exists.
+export function uninstallHooks() {
+  const results = [];
+  for (const dir of findProfileDirs()) {
+    const settings = join(dir, 'settings.json');
+    if (!existsSync(settings)) continue;
+    try {
+      const data = JSON.parse(readFileSync(settings, 'utf8'));
+      const hooks = data.hooks;
+      let removed = 0;
+      if (hooks && typeof hooks === 'object') {
+        for (const ev of Object.keys(hooks)) {
+          const blocks = Array.isArray(hooks[ev]) ? hooks[ev] : null;
+          if (!blocks) continue;
+          const emptied = new Set();
+          for (const b of blocks) {
+            if (!b || !Array.isArray(b.hooks)) continue;
+            const before = b.hooks.length;
+            b.hooks = b.hooks.filter(h => !isOurHook(h.command));
+            if (b.hooks.length < before) {
+              removed += before - b.hooks.length;
+              if (!b.hooks.length) emptied.add(b);
+            }
+          }
+          if (!emptied.size) continue;
+          // only prune what our removal emptied — anything that was already
+          // empty belongs to the user and stays as it was
+          hooks[ev] = blocks.filter(b => !emptied.has(b));
+          if (!hooks[ev].length) delete hooks[ev];
+        }
+        if (removed && !Object.keys(hooks).length) delete data.hooks;
+      }
+      if (removed) {
+        backupOnce(settings);
+        writeFileSync(settings, JSON.stringify(data, null, 2));
+        results.push({ settings, changed: true, removed });
       } else {
         results.push({ settings, changed: false });
       }

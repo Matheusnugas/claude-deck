@@ -76,6 +76,8 @@
     "hint_ready": "一切正常。",
     "tracking_button": "啟用 Claude 追蹤",
     "btn_update": "更新 Claude 追蹤",
+    "btn_remove": "移除 Claude 追蹤",
+    "btn_remove_confirm": "再撳一次就會移除",
     "btn_check_terminal": "檢查終端機存取權",
     "btn_checking": "詢問緊 macOS…",
     "btn_guide": "使用指南",

@@ -6,10 +6,12 @@
  * user can act on, and replaces the single status line the panels used to show.
  *
  * Requires in the page: <div id="setup-rows">, and optionally the buttons
- * #hook-install, #terminal-check, #guide-open. */
+ * #hook-install, #hook-remove, #terminal-check, #guide-open. */
 (function () {
   var rows = document.getElementById('setup-rows');
   var installBtn = document.getElementById('hook-install');
+  var removeBtn = document.getElementById('hook-remove');
+  var removeArmedUntil = 0;
   var terminalBtn = document.getElementById('terminal-check');
   var guideBtn = document.getElementById('guide-open');
   if (!rows && !guideBtn) return;
@@ -113,6 +115,10 @@
         : t('tracking_button', 'Enable Claude tracking');
     }
     if (terminalBtn) terminalBtn.style.display = access === 'ok' ? 'none' : '';
+    if (removeBtn) {
+      removeBtn.style.display = h.installed > 0 ? '' : 'none';
+      if (Date.now() >= removeArmedUntil) removeBtn.textContent = t('btn_remove', 'Remove Claude tracking');
+    }
   }
 
   function refresh() {
@@ -137,6 +143,22 @@
   if (installBtn) {
     installBtn.addEventListener('click', function () {
       $UD.sendToPlugin({ cmd: 'installHooks' });
+    });
+  }
+  // two clicks: the first arms (label changes), the second within 4 s removes
+  if (removeBtn) {
+    removeBtn.addEventListener('click', function () {
+      if (Date.now() < removeArmedUntil) {
+        removeArmedUntil = 0;
+        removeBtn.textContent = t('btn_remove', 'Remove Claude tracking');
+        $UD.sendToPlugin({ cmd: 'uninstallHooks' });
+        return;
+      }
+      removeArmedUntil = Date.now() + 4000;
+      removeBtn.textContent = t('btn_remove_confirm', 'Click again to remove');
+      setTimeout(function () {
+        if (Date.now() >= removeArmedUntil) removeBtn.textContent = t('btn_remove', 'Remove Claude tracking');
+      }, 4100);
     });
   }
   if (terminalBtn) {
